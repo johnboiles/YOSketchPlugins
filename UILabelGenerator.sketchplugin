@@ -1,0 +1,54 @@
+// (cmd alt l)
+
+function alert(text) {
+	var alert = [[NSAlert alloc] init]
+	[alert setMessageText:text]
+	[alert addButtonWithTitle:'OK']
+	[alert runModal]
+}
+
+function copyToClipboard(text) {
+	var pasteBoard = NSPasteboard.generalPasteboard();
+	pasteBoard.declareTypes_owner( [ NSPasteboardTypeString ], null );
+	pasteBoard.setString_forType_(text, NSStringPboardType)
+}
+
+function main() {
+	log(sketch.scriptPath);
+	objects = selection.objectEnumerator();
+	code = "";
+
+	while(item = objects.nextObject()) {
+		if (item.class() != MSTextLayer) {
+			alert("Error, must select a text layer for UILabel export")
+		} else {
+			code += renderLabel(item)
+		}
+	}
+
+	copyToClipboard(code)
+}
+
+function UIColorFromColor(color) {
+	return '[UIColor colorWithRed:' + color.red() + ' green:' + color.green() + ' blue:' + color.blue() + ' alpha:' + color.alpha() + ']'
+}
+
+function NSTextAlignment(textAlignment) {
+	if(textAlignment == 0) return "NSTextAlignmentLeft"
+	else if(textAlignment == 1) return "NSTextAlignmentRight"
+	else if(textAlignment == 2) return "NSTextAlignmentCenter"
+	else  return "NSTextAlignmentLeft"
+}
+
+function renderLabel(textLayer) {
+	// TODO: Might be better practice to use attributed text here
+	code = ''
+	code += 'UILabel *' + textLayer.name() + ' = [UILabel new];\n'
+	code += textLayer.name() + '.font = [UIFont fontWithName:@"' + textLayer.fontPostscriptName() + '" size:' + textLayer.fontSize() + '];\n'
+	code += textLayer.name() + '.textColor = ' + UIColorFromColor(textLayer.textColor()) + ';\n'
+	code += textLayer.name() + '.text = @"' + textLayer.stringValue() + '";\n'
+	code += textLayer.name() + '.textAlignment = ' + NSTextAlignment(textLayer.textAlignment()) + ';\n'
+	return code
+}
+
+main();
