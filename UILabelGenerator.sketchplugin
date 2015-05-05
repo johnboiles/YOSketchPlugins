@@ -1,4 +1,17 @@
-// (cmd alt l)
+// (ctrl alt k)
+
+var UILabelTemplate = [
+'UILabel *{{ name }} = [UILabel new];',
+'{{ name }}.font = [UIFont fontWithName:@"{{ font }}"" size:{{ fontSize }}];',
+'{{ name }}.textColor = {{ textColor }};',
+'{{ name }}.text = @"{{ text }}";',
+'{{ name }}.textAlignment = {{ textAlignment }};',
+].join('\n');
+
+String.prototype.replaceAll = function (find, replace) {
+    var str = this;
+    return str.replace(new RegExp(find, 'g'), replace);
+};
 
 function alert(text) {
 	var alert = [[NSAlert alloc] init]
@@ -42,12 +55,14 @@ function NSTextAlignment(textAlignment) {
 
 function renderLabel(textLayer) {
 	// TODO: Might be better practice to use attributed text here
-	code = ''
-	code += 'UILabel *' + textLayer.name() + ' = [UILabel new];\n'
-	code += textLayer.name() + '.font = [UIFont fontWithName:@"' + textLayer.fontPostscriptName() + '" size:' + textLayer.fontSize() + '];\n'
-	code += textLayer.name() + '.textColor = ' + UIColorFromColor(textLayer.textColor()) + ';\n'
-	code += textLayer.name() + '.text = @"' + textLayer.stringValue() + '";\n'
-	code += textLayer.name() + '.textAlignment = ' + NSTextAlignment(textLayer.textAlignment()) + ';\n'
+	code = UILabelTemplate
+	.replaceAll('{{ name }}', textLayer.name())
+	.replaceAll('{{ font }}', textLayer.fontPostscriptName())
+	.replaceAll('{{ fontSize }}', textLayer.fontSize() / 2)
+	.replaceAll('{{ textColor }}', UIColorFromColor(textLayer.textColor()))
+	.replaceAll('{{ text }}', textLayer.stringValue())
+	.replaceAll('{{ textAlignment }}', NSTextAlignment(textLayer.textAlignment()));
+
 	return code
 }
 
