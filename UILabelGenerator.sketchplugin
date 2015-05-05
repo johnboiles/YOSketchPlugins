@@ -1,69 +1,55 @@
 // (ctrl alt k)
 
+@import 'common.js'
+
 var UILabelTemplate = [
 'UILabel *{{ name }} = [UILabel new];',
 '{{ name }}.font = [UIFont fontWithName:@"{{ font }}"" size:{{ fontSize }}];',
 '{{ name }}.textColor = {{ textColor }};',
 '{{ name }}.text = @"{{ text }}";',
 '{{ name }}.textAlignment = {{ textAlignment }};',
+'{{ name }}.numberOfLines = 0;',
+'{{ name }}.lineBreakMode = NSLineBreakByWordWrapping;',
+'{{ name }}.alpha = {{ alpha }};',
 ].join('\n');
 
-String.prototype.replaceAll = function (find, replace) {
-    var str = this;
-    return str.replace(new RegExp(find, 'g'), replace);
-};
-
-function alert(text) {
-	var alert = [[NSAlert alloc] init]
-	[alert setMessageText:text]
-	[alert addButtonWithTitle:'OK']
-	[alert runModal]
-}
-
-function copyToClipboard(text) {
-	var pasteBoard = NSPasteboard.generalPasteboard();
-	pasteBoard.declareTypes_owner( [ NSPasteboardTypeString ], null );
-	pasteBoard.setString_forType_(text, NSStringPboardType)
-}
-
 function main() {
-	log(sketch.scriptPath);
-	objects = selection.objectEnumerator();
-	code = "";
+    log(sketch.scriptPath);
+    objects = selection.objectEnumerator();
+    code = "";
 
-	while(item = objects.nextObject()) {
-		if (item.class() != MSTextLayer) {
-			alert("Error, must select a text layer for UILabel export")
-		} else {
-			code += renderLabel(item)
-		}
-	}
+    while(item = objects.nextObject()) {
+        if (item.class() != MSTextLayer) {
+            runCommand(['-c', 'afplay /System/Library/Sounds/Basso.aiff']);
+            [doc showMessage:"Error: Must select a text layer for UILabel export"];
+            return;
+        } else {
+            code += renderLabel(item)
+        }
+    }
 
-	copyToClipboard(code)
-}
-
-function UIColorFromColor(color) {
-	return '[UIColor colorWithRed:' + color.red() + ' green:' + color.green() + ' blue:' + color.blue() + ' alpha:' + color.alpha() + ']'
+    copyToClipboard(code)
+    [doc showMessage:"UILabel code copied to clipboard"];
 }
 
 function NSTextAlignment(textAlignment) {
-	if(textAlignment == 0) return "NSTextAlignmentLeft"
-	else if(textAlignment == 1) return "NSTextAlignmentRight"
-	else if(textAlignment == 2) return "NSTextAlignmentCenter"
-	else  return "NSTextAlignmentLeft"
+    if(textAlignment == 0) return "NSTextAlignmentLeft"
+    else if(textAlignment == 1) return "NSTextAlignmentRight"
+    else if(textAlignment == 2) return "NSTextAlignmentCenter"
+    else return "NSTextAlignmentLeft"
 }
 
 function renderLabel(textLayer) {
-	// TODO: Might be better practice to use attributed text here
-	code = UILabelTemplate
-	.replaceAll('{{ name }}', textLayer.name())
-	.replaceAll('{{ font }}', textLayer.fontPostscriptName())
-	.replaceAll('{{ fontSize }}', textLayer.fontSize() / 2)
-	.replaceAll('{{ textColor }}', UIColorFromColor(textLayer.textColor()))
-	.replaceAll('{{ text }}', textLayer.stringValue())
-	.replaceAll('{{ textAlignment }}', NSTextAlignment(textLayer.textAlignment()));
-
-	return code
+    // TODO: Might be better practice to use attributed text here
+    code = UILabelTemplate
+    .replaceAll('{{ name }}', textLayer.name().toCamelCase())
+    .replaceAll('{{ font }}', textLayer.fontPostscriptName())
+    .replaceAll('{{ fontSize }}', textLayer.fontSize() / 2)
+    .replaceAll('{{ textColor }}', UIColorFromColor(textLayer.textColor()))
+    .replaceAll('{{ text }}', textLayer.stringValue())
+    .replaceAll('{{ textAlignment }}', NSTextAlignment(textLayer.textAlignment()))
+    .replaceAll('{{ alpha }}', textLayer.style().contextSettings().opacity());
+    return code
 }
 
 main();
